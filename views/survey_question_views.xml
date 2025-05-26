@@ -10,13 +10,15 @@
             <field name="question_type" position="after">
                 <!-- Fill in the blanks fields -->
                 <field name="is_fill_in_blank" invisible="1"/>
-                <field name="fill_blank_text" invisible="eval" 
-                       attrs="{'invisible': [('question_type', '!=', 'fill_blank')], 'required': [('question_type', '=', 'fill_blank')]}"/>
+                <field name="fill_blank_text" 
+                       invisible="question_type != 'fill_blank'" 
+                       required="question_type == 'fill_blank'"/>
                 
                 <!-- Match the following fields -->
                 <field name="is_match_following" invisible="1"/>
-                <field name="match_item_ids" invisible="eval"
-                       attrs="{'invisible': [('question_type', '!=', 'match_following')], 'required': [('question_type', '=', 'match_following')]}">
+                <field name="match_item_ids" 
+                       invisible="question_type != 'match_following'" 
+                       required="question_type == 'match_following'">
                     <tree editable="bottom">
                         <field name="left_text"/>
                         <field name="right_text"/>
@@ -25,15 +27,17 @@
                 
                 <!-- Drag and drop fields -->
                 <field name="is_drag_drop" invisible="1"/>
-                <field name="drag_item_ids" invisible="eval"
-                       attrs="{'invisible': [('question_type', '!=', 'drag_drop')], 'required': [('question_type', '=', 'drag_drop')]}">
+                <field name="drag_item_ids" 
+                       invisible="question_type != 'drag_drop'" 
+                       required="question_type == 'drag_drop'">
                     <tree editable="bottom">
                         <field name="item_text"/>
                         <field name="correct_zone_id"/>
                     </tree>
                 </field>
-                <field name="drop_zone_ids" invisible="eval"
-                       attrs="{'invisible': [('question_type', '!=', 'drag_drop')], 'required': [('question_type', '=', 'drag_drop')]}">
+                <field name="drop_zone_ids" 
+                       invisible="question_type != 'drag_drop'" 
+                       required="question_type == 'drag_drop'">
                     <tree editable="bottom">
                         <field name="zone_text"/>
                     </tree>

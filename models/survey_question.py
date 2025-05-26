@@ -11,9 +11,9 @@ class SurveyQuestion(models.Model):
             ('drag_drop', 'Drag and Drop')
         ],
         ondelete={
-            'fill_blank': 'set default',
-            'match_following': 'set default',
-            'drag_drop': 'set default'
+            'fill_blank': 'cascade',  # Changed from 'set default' to 'cascade'
+            'match_following': 'cascade',  # Changed from 'set default' to 'cascade'
+            'drag_drop': 'cascade'  # Changed from 'set default' to 'cascade'
         }
     )
     
