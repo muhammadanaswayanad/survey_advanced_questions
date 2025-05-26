@@ -10,11 +10,11 @@ class SurveyUserInput(models.Model):
 class SurveyUserInputLine(models.Model):
     _inherit = 'survey.user_input.line'
     
-    # Fields for advanced answer types
-    fill_blank_answers = fields.Text('Fill Blank Answers')
-    match_answers = fields.Text('Match Answers')
-    drag_drop_answers = fields.Text('Drag and Drop Answers')
-    
+    # Add fields for storing advanced question answers
+    fill_blank_answers = fields.Text('Fill in the Blank Answers', help="JSON representation of answers for fill-in-the-blank questions")
+    match_answers = fields.Text('Match Following Answers', help="JSON representation of matching pairs")
+    drag_drop_answers = fields.Text('Drag and Drop Answers', help="JSON representation of item placements")
+
     @api.depends('question_id.question_type', 'fill_blank_answers', 'match_answers', 
                  'drag_drop_answers', 'answer_type')
     def _compute_value_count(self):
@@ -41,17 +41,19 @@ class SurveyUserInputLine(models.Model):
                  'value_text_box', 'value_char_box', 'suggested_answer_id', 'value_datetime',
                  'fill_blank_answers', 'match_answers', 'drag_drop_answers')
     def _compute_answer_score(self):
-        super(SurveyUserInputLine, self)._compute_answer_score()
+        """ Override to add scoring for advanced question types """
         for line in self:
-            score = 0.0
+            # Call the original method for standard question types
+            super(SurveyUserInputLine, line)._compute_answer_score()
             
-            # Handle advanced types scoring
+            # Handle advanced question types
             if line.question_id.question_type == 'fill_blank' and line.fill_blank_answers:
                 try:
                     user_answers = json.loads(line.fill_blank_answers)
                     correct_answers = line.question_id.fill_blank_answer_ids
                     
                     if len(user_answers) == len(correct_answers):
+                        score = 0.0
                         for i, answer in enumerate(user_answers):
                             if i >= len(correct_answers):
                                 continue

@@ -15,7 +15,14 @@
     'data': [
         'security/ir.model.access.csv',
         'views/survey_question_views.xml',
+        'views/survey_templates.xml',
     ],
+    'assets': {
+        'web.assets_frontend': [
+            '/survey_advanced_questions/static/src/js/survey_advanced_questions.js',
+            '/survey_advanced_questions/static/src/scss/survey_advanced_questions.scss',
+        ],
+    },
     'installable': True,
     'application': False,
     'auto_install': False,

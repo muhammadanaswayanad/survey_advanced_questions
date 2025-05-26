@@ -1,93 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="survey_advanced_question_content" inherit_id="survey.question_content">
-        <xpath expr="//div[hasclass('o_survey_question_content')]" position="inside">
-            <!-- Fill in the Blanks -->
+    <!-- Add template for displaying advanced question types in survey -->
+    <template id="survey_advanced_questions_templates" inherit_id="survey.survey_question_container">
+        <xpath expr="//div[hasclass('o_survey_question_text')]" position="after">
+            <!-- Template for fill in the blanks -->
             <t t-if="question.question_type == 'fill_blank'">
-                <div class="fill-blank-container" t-att-data-question-id="question.id">
-                    <div class="fill-blank-text">
-                        <t t-set="blank_index" t-value="0" />
-                        <t t-foreach="question.fill_blank_text.split('[___]')" t-as="text_part">
-                            <t t-esc="text_part" />
-                            <t t-if="blank_index &lt; len(question.fill_blank_answer_ids)">
-                                <input type="text" class="fill-blank-input form-control d-inline-block" 
-                                       style="width: 120px;" 
-                                       t-attf-name="fill_blank_{{question.id}}_{{blank_index}}" 
-                                       t-attf-id="fill_blank_{{question.id}}_{{blank_index}}"
-                                       t-att-data-blank-index="blank_index"/>
-                                <t t-set="blank_index" t-value="blank_index + 1" />
-                            </t>
+                <div class="fill_blank_container">
+                    <!-- Here you would render the text with input fields -->
+                    <t t-esc="question.fill_blank_text"/>
+                </div>
+            </t>
+
+            <!-- Template for match the following -->
+            <t t-if="question.question_type == 'match_following'">
+                <div class="match_following_container">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <!-- Left column items -->
+                            <div class="match_left_items">
+                                <t t-foreach="question.match_item_ids" t-as="item">
+                                    <div class="match_left_item" t-att-data-item-id="item.id">
+                                        <span t-esc="item.left_text"/>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <!-- Right column items (to be matched) -->
+                            <div class="match_right_items">
+                                <t t-foreach="question.match_item_ids" t-as="item">
+                                    <div class="match_right_item" t-att-data-item-id="item.id">
+                                        <span t-esc="item.right_text"/>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+
+            <!-- Template for drag and drop -->
+            <t t-if="question.question_type == 'drag_drop'">
+                <div class="drag_drop_container">
+                    <div class="drag_items">
+                        <t t-foreach="question.drag_item_ids" t-as="item">
+                            <div class="drag_item" draggable="true" t-att-data-item-id="item.id">
+                                <span t-esc="item.item_text"/>
+                            </div>
                         </t>
                     </div>
-                </div>
-            </t>
-            
-            <!-- Match the Following -->
-            <t t-if="question.question_type == 'matching'">
-                <div class="matching-container" t-att-data-question-id="question.id">
-                    <div class="row">
-                        <div class="col-sm-5">
-                            <h6 class="mb-3">Items</h6>
-                            <div class="matching-left-items">
-                                <t t-foreach="question.match_item_ids" t-as="item">
-                                    <div class="matching-item mb-2" t-att-data-left-text="item.left_text">
-                                        <span class="matching-left-text"><t t-esc="item.left_text"/></span>
-                                    </div>
-                                </t>
+                    <div class="drop_zones">
+                        <t t-foreach="question.drop_zone_ids" t-as="zone">
+                            <div class="drop_zone" t-att-data-zone-id="zone.id">
+                                <span t-esc="zone.zone_text"/>
                             </div>
-                        </div>
-                        <div class="col-sm-2 text-center align-self-center d-none d-sm-block">
-                            <i class="fa fa-arrows-h" aria-hidden="true"></i>
-                        </div>
-                        <div class="col-sm-5">
-                            <h6 class="mb-3">Matches</h6>
-                            <div class="matching-right-items">
-                                <t t-set="right_items" t-value="question.match_item_ids.mapped('right_text')" />
-                                <t t-set="shuffled_items" t-value="right_items.copy()" />
-                                <t t-foreach="shuffled_items" t-as="right_text">
-                                    <div class="matching-item mb-2 matching-right-option" t-att-data-right-text="right_text">
-                                        <span class="matching-right-text"><t t-esc="right_text"/></span>
-                                    </div>
-                                </t>
-                            </div>
-                        </div>
+                        </t>
                     </div>
-                    <input type="hidden" t-att-name="'match_answers_' + str(question.id)" t-att-id="'match_answers_' + str(question.id)" />
-                </div>
-            </t>
-            
-            <!-- Drag and Drop -->
-            <t t-if="question.question_type == 'drag_drop'">
-                <div class="drag-drop-container" t-att-data-question-id="question.id">
-                    <div class="drag-items-container mb-4">
-                        <h6 class="mb-3">Drag these items to their correct locations:</h6>
-                        <div class="drag-items d-flex flex-wrap">
-                            <t t-foreach="question.drag_item_ids" t-as="item">
-                                <div class="drag-item m-2 p-2 border rounded" 
-                                     t-att-data-item-id="item.id">
-                                    <t t-esc="item.name"/>
-                                </div>
-                            </t>
-                        </div>
-                    </div>
-                    
-                    <div class="drop-zones-container">
-                        <h6 class="mb-3">Drop zones:</h6>
-                        <div class="row">
-                            <t t-foreach="question.drop_zone_ids" t-as="zone">
-                                <div class="col-md-4">
-                                    <div class="drop-zone mb-3 p-3 border rounded" 
-                                         t-att-data-zone-id="zone.id">
-                                        <div class="zone-label mb-2"><t t-esc="zone.name"/></div>
-                                        <div class="zone-items min-height-100">
-                                            <!-- Items will be dropped here -->
-                                        </div>
-                                    </div>
-                                </div>
-                            </t>
-                        </div>
-                    </div>
-                    <input type="hidden" t-att-name="'drag_drop_answers_' + str(question.id)" t-att-id="'drag_drop_answers_' + str(question.id)" />
                 </div>
             </t>
         </xpath>

@@ -1,258 +1,188 @@
 odoo.define('survey_advanced_questions.frontend', function (require) {
-    'use strict';
+'use strict';
 
-    var core = require('web.core');
-    var publicWidget = require('web.public.widget');
-    var surveyForm = require('survey.form');
+var publicWidget = require('web.public.widget');
+var core = require('web.core');
+var _t = core._t;
 
-    // Extend survey form widget
-    surveyForm.include({
-        events: _.extend({}, surveyForm.prototype.events, {
-            'change .fill-blank-input': '_onFillBlankChange',
-            'click .matching-right-option': '_onMatchOptionClick',
-            'dragstart .drag-item': '_onDragStart',
-            'dragover .drop-zone': '_onDragOver',
-            'drop .drop-zone': '_onDrop',
-            'dragleave .drop-zone': '_onDragLeave',
-        }),
+publicWidget.registry.SurveyAdvancedQuestions = publicWidget.Widget.extend({
+    selector: '.o_survey_form',
+    events: {
+        'dragstart .drag_item': '_onDragStart',
+        'dragover .drop_zone': '_onDragOver',
+        'drop .drop_zone': '_onDrop',
+        'click .match_right_item': '_onMatchItemClick',
+    },
+    
+    /**
+     * @override
+     */
+    start: function () {
+        var self = this;
+        return this._super.apply(this, arguments).then(function () {
+            self._initializeFillBlanks();
+            self._initializeMatchFollowing();
+            self._initializeDragDrop();
+        });
+    },
+    
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+    
+    /**
+     * Initialize fill in the blanks questions
+     * 
+     * @private
+     */
+    _initializeFillBlanks: function () {
+        var self = this;
+        // Find all fill in the blank questions
+        this.$el.find('.fill_blank_container').each(function () {
+            var $container = $(this);
+            var text = $container.text().trim();
+            
+            // Replace [___] with input fields
+            var html = text.replace(/\[___\]/g, '<input type="text" class="fill_blank_input" />');
+            $container.html(html);
+        });
+    },
+    
+    /**
+     * Initialize match the following questions
+     * 
+     * @private
+     */
+    _initializeMatchFollowing: function () {
+        var self = this;
+        // Find all match the following questions
+        this.$el.find('.match_following_container').each(function () {
+            var $container = $(this);
+            
+            // Randomize right items
+            var $rightItems = $container.find('.match_right_items').children().toArray();
+            $rightItems.sort(function() { return 0.5 - Math.random(); });
+            $container.find('.match_right_items').empty().append($rightItems);
+            
+            // Initialize matching state
+            $container.data('matches', {});
+        });
+    },
+    
+    /**
+     * Initialize drag and drop questions
+     * 
+     * @private
+     */
+    _initializeDragDrop: function () {
+        var self = this;
+        // Find all drag and drop questions
+        this.$el.find('.drag_drop_container').each(function () {
+            var $container = $(this);
+            
+            // Initialize placement state
+            $container.data('placements', {});
+        });
+    },
+    
+    //--------------------------------------------------------------------------
+    // Handlers
+    //--------------------------------------------------------------------------
+    
+    /**
+     * Handle drag start event
+     * 
+     * @private
+     * @param {Event} ev
+     */
+    _onDragStart: function (ev) {
+        ev.originalEvent.dataTransfer.setData('text/plain', $(ev.currentTarget).data('item-id'));
+        ev.originalEvent.dataTransfer.effectAllowed = 'move';
+    },
+    
+    /**
+     * Handle drag over event
+     * 
+     * @private
+     * @param {Event} ev
+     */
+    _onDragOver: function (ev) {
+        ev.preventDefault();
+        ev.originalEvent.dataTransfer.dropEffect = 'move';
+        $(ev.currentTarget).addClass('drag-over');
+    },
+    
+    /**
+     * Handle drop event
+     * 
+     * @private
+     * @param {Event} ev
+     */
+    _onDrop: function (ev) {
+        ev.preventDefault();
+        var $dropZone = $(ev.currentTarget);
+        $dropZone.removeClass('drag-over');
         
-        /**
-         * Initialize advanced question features after DOM ready
-         */
-        start: function () {
-            var self = this;
-            return this._super.apply(this, arguments).then(function () {
-                self._initMatchingQuestions();
-                self._initDragAndDropQuestions();
-            });
-        },
-
-        /**
-         * Initialize matching questions
-         */
-        _initMatchingQuestions: function () {
-            var self = this;
-            $('.matching-container').each(function () {
-                var $container = $(this);
-                var questionId = $container.data('question-id');
-                
-                // Make right items clickable and droppable
-                $container.find('.matching-right-option').attr('draggable', true);
-                
-                // Initialize the hidden input
-                self._updateMatchingAnswer($container);
-            });
-        },
+        var itemId = ev.originalEvent.dataTransfer.getData('text/plain');
+        var zoneId = $dropZone.data('zone-id');
         
-        /**
-         * Initialize drag and drop questions
-         */
-        _initDragAndDropQuestions: function () {
-            var self = this;
-            $('.drag-drop-container').each(function () {
-                var $container = $(this);
-                var questionId = $container.data('question-id');
-                
-                // Make items draggable
-                $container.find('.drag-item').attr('draggable', true);
-                
-                // Initialize the hidden input
-                self._updateDragDropAnswer($container);
-            });
-        },
-
-        /**
-         * Handle fill in the blank changes
-         */
-        _onFillBlankChange: function (event) {
-            var $input = $(event.currentTarget);
-            var $container = $input.closest('.fill-blank-container');
-            var questionId = $container.data('question-id');
-            
-            this._updateFillBlankAnswer($container);
-        },
+        // Update placements
+        var $container = $dropZone.closest('.drag_drop_container');
+        var placements = $container.data('placements') || {};
+        placements[itemId] = zoneId;
+        $container.data('placements', placements);
         
-        /**
-         * Handle matching option click
-         */
-        _onMatchOptionClick: function (event) {
-            var $option = $(event.currentTarget);
-            var $container = $option.closest('.matching-container');
-            var selectedLeftItem = $container.find('.matching-left-item.selected');
-            
-            if (selectedLeftItem.length) {
-                var leftText = selectedLeftItem.data('left-text');
-                var rightText = $option.data('right-text');
-                
-                // Mark this pair as matched
-                selectedLeftItem.attr('data-matched-to', rightText);
-                selectedLeftItem.removeClass('selected').addClass('matched');
-                
-                this._updateMatchingAnswer($container);
-            }
-        },
+        // Update UI
+        var $item = this.$el.find('.drag_item[data-item-id="' + itemId + '"]');
+        $dropZone.append($item);
         
-        /**
-         * Handle drag start
-         */
-        _onDragStart: function (event) {
-            var $item = $(event.currentTarget);
-            event.originalEvent.dataTransfer.setData('text/plain', $item.data('item-id'));
-            event.originalEvent.dataTransfer.effectAllowed = 'move';
-        },
-        
-        /**
-         * Handle drag over
-         */
-        _onDragOver: function (event) {
-            event.preventDefault();
-            $(event.currentTarget).addClass('drag-over');
-            event.originalEvent.dataTransfer.dropEffect = 'move';
-        },
-        
-        /**
-         * Handle drop
-         */
-        _onDrop: function (event) {
-            event.preventDefault();
-            var $zone = $(event.currentTarget);
-            var $container = $zone.closest('.drag-drop-container');
-            var itemId = event.originalEvent.dataTransfer.getData('text/plain');
-            var zoneId = $zone.data('zone-id');
-            
-            // Move the item visually
-            var $item = $container.find(`.drag-item[data-item-id="${itemId}"]`);
-            $item.detach();
-            $zone.find('.zone-items').append($item);
-            $item.attr('data-placed-in', zoneId);
-            
-            $zone.removeClass('drag-over');
-            
-            this._updateDragDropAnswer($container);
-        },
-        
-        /**
-         * Handle drag leave
-         */
-        _onDragLeave: function (event) {
-            $(event.currentTarget).removeClass('drag-over');
-        },
-
-        /**
-         * Update the hidden input with fill in the blank answers
-         */
-        _updateFillBlankAnswer: function ($container) {
-            var questionId = $container.data('question-id');
-            var answers = [];
-            
-            $container.find('.fill-blank-input').each(function () {
-                answers.push($(this).val());
-            });
-            
-            var inputName = `fill_blank_answers_${questionId}`;
-            var $hiddenInput = $(`#${inputName}`);
-            
-            // Create hidden input if it doesn't exist
-            if (!$hiddenInput.length) {
-                $container.append($('<input>', {
-                    type: 'hidden',
-                    name: inputName,
-                    id: inputName
-                }));
-                $hiddenInput = $(`#${inputName}`);
-            }
-            
-            $hiddenInput.val(JSON.stringify(answers));
-        },
-        
-        /**
-         * Update the hidden input with matching answers
-         */
-        _updateMatchingAnswer: function ($container) {
-            var questionId = $container.data('question-id');
-            var matches = {};
-            
-            $container.find('.matching-item[data-matched-to]').each(function () {
-                var leftText = $(this).data('left-text');
-                var rightText = $(this).data('matched-to');
-                matches[leftText] = rightText;
-            });
-            
-            var inputId = `match_answers_${questionId}`;
-            $(`#${inputId}`).val(JSON.stringify(matches));
-        },
-        
-        /**
-         * Update the hidden input with drag and drop answers
-         */
-        _updateDragDropAnswer: function ($container) {
-            var questionId = $container.data('question-id');
-            var placements = {};
-            
-            $container.find('.drag-item[data-placed-in]').each(function () {
-                var itemId = $(this).data('item-id');
-                var zoneId = $(this).data('placed-in');
-                placements[itemId] = zoneId;
-            });
-            
-            var inputId = `drag_drop_answers_${questionId}`;
-            $(`#${inputId}`).val(JSON.stringify(placements));
-        },
-
-        /**
-         * Extend prepare form data submission to include our custom question types
-         */
-        _prepareSubmitValues: function () {
-            var self = this;
-            var result = this._super.apply(this, arguments);
-            
-            // Process fill in the blanks
-            $('.fill-blank-container').each(function () {
-                var $container = $(this);
-                var questionId = $container.data('question-id');
-                var inputId = `fill_blank_answers_${questionId}`;
-                var answers = $(`#${inputId}`).val();
-                
-                if (answers) {
-                    result[`question_${questionId}`] = {
-                        'fill_blank_answers': answers
-                    };
-                }
-            });
-            
-            // Process matching questions
-            $('.matching-container').each(function () {
-                var $container = $(this);
-                var questionId = $container.data('question-id');
-                var inputId = `match_answers_${questionId}`;
-                var answers = $(`#${inputId}`).val();
-                
-                if (answers) {
-                    result[`question_${questionId}`] = {
-                        'match_answers': answers
-                    };
-                }
-            });
-            
-            // Process drag and drop questions
-            $('.drag-drop-container').each(function () {
-                var $container = $(this);
-                var questionId = $container.data('question-id');
-                var inputId = `drag_drop_answers_${questionId}`;
-                var answers = $(`#${inputId}`).val();
-                
-                if (answers) {
-                    result[`question_${questionId}`] = {
-                        'drag_drop_answers': answers
-                    };
-                }
-            });
-            
-            return result;
+        // Store the answer in a hidden input for form submission
+        var $question = $container.closest('.o_survey_question');
+        var questionId = $question.data('question-id');
+        var $input = $question.find('input.drag_drop_answers');
+        if (!$input.length) {
+            $input = $('<input type="hidden" class="drag_drop_answers" />').appendTo($question);
         }
-    });
+        $input.val(JSON.stringify(placements));
+    },
+    
+    /**
+     * Handle clicking on a match item
+     * 
+     * @private
+     * @param {Event} ev
+     */
+    _onMatchItemClick: function (ev) {
+        var $rightItem = $(ev.currentTarget);
+        var $container = $rightItem.closest('.match_following_container');
+        var $leftItem = $container.find('.match_left_item.selected');
+        
+        if ($leftItem.length) {
+            // Make the match
+            var leftId = $leftItem.data('item-id');
+            var rightId = $rightItem.data('item-id');
+            
+            // Update matches
+            var matches = $container.data('matches') || {};
+            matches[leftId] = rightId;
+            $container.data('matches', matches);
+            
+            // Update UI
+            $leftItem.removeClass('selected').addClass('matched');
+            $rightItem.addClass('matched');
+            
+            // Store the answer in a hidden input for form submission
+            var $question = $container.closest('.o_survey_question');
+            var questionId = $question.data('question-id');
+            var $input = $question.find('input.match_answers');
+            if (!$input.length) {
+                $input = $('<input type="hidden" class="match_answers" />').appendTo($question);
+            }
+            $input.val(JSON.stringify(matches));
+        }
+    }
+});
 
-    return {
-        // Export functionality if needed
-    };
+return publicWidget.registry.SurveyAdvancedQuestions;
+
 });
