@@ -4,22 +4,38 @@ from odoo.exceptions import ValidationError
 class SurveyQuestion(models.Model):
     _inherit = 'survey.question'
 
-    question_type = fields.Selection(selection_add=[
-        ('fill_blank', 'Fill in the Blanks'),
-        ('matching', 'Match the Following'),
-        ('drag_drop', 'Drag and Drop Answer')
-    ], ondelete={'fill_blank': 'cascade', 'matching': 'cascade', 'drag_drop': 'cascade'})
+    question_type = fields.Selection(
+        selection_add=[
+            ('fill_blank', 'Fill in the Blanks'),
+            ('match_following', 'Match the Following'),
+            ('drag_drop', 'Drag and Drop')
+        ],
+        ondelete={
+            'fill_blank': 'set default',
+            'match_following': 'set default',
+            'drag_drop': 'set default'
+        }
+    )
     
-    # For fill in the blanks
-    fill_blank_text = fields.Text("Text with Blanks", help="Use [___] to denote a blank space")
-    fill_blank_answer_ids = fields.One2many('survey.question.fill.blank', 'question_id', string="Fill Blank Answers")
+    # Fill in the blank fields
+    is_fill_in_blank = fields.Boolean(compute='_compute_question_type_fields')
+    fill_blank_text = fields.Text(string="Question Text with Blanks", help="Use [___] to indicate blank spaces")
     
-    # For matching questions
+    # Match the following fields
+    is_match_following = fields.Boolean(compute='_compute_question_type_fields')
     match_item_ids = fields.One2many('survey.question.match.item', 'question_id', string="Match Items")
     
-    # For drag and drop questions
+    # Drag and drop fields
+    is_drag_drop = fields.Boolean(compute='_compute_question_type_fields')
     drag_item_ids = fields.One2many('survey.question.drag.item', 'question_id', string="Drag Items")
     drop_zone_ids = fields.One2many('survey.question.drop.zone', 'question_id', string="Drop Zones")
+    
+    @api.depends('question_type')
+    def _compute_question_type_fields(self):
+        for question in self:
+            question.is_fill_in_blank = question.question_type == 'fill_blank'
+            question.is_match_following = question.question_type == 'match_following'
+            question.is_drag_drop = question.question_type == 'drag_drop'
 
     @api.constrains('question_type', 'fill_blank_text', 'fill_blank_answer_ids')
     def _check_fill_blank_answers(self):
@@ -48,45 +64,27 @@ class SurveyQuestion(models.Model):
                     raise ValidationError(_("You must define at least one drop zone."))
 
 
-class SurveyQuestionFillBlank(models.Model):
-    _name = 'survey.question.fill.blank'
-    _description = 'Survey Question Fill Blank Answer'
-    _order = 'sequence, id'
-    
-    question_id = fields.Many2one('survey.question', string="Question", ondelete='cascade', required=True)
-    sequence = fields.Integer(default=10)
-    correct_answer = fields.Char('Correct Answer', required=True)
-    is_case_sensitive = fields.Boolean('Case Sensitive', default=False)
-    allowed_variations = fields.Char('Allowed Variations', help="Comma-separated alternative correct answers")
-
-
 class SurveyQuestionMatchItem(models.Model):
     _name = 'survey.question.match.item'
     _description = 'Survey Question Match Item'
-    _order = 'sequence, id'
     
-    question_id = fields.Many2one('survey.question', string="Question", ondelete='cascade', required=True)
-    sequence = fields.Integer(default=10)
-    left_text = fields.Char('Left Item', required=True)
-    right_text = fields.Char('Right Item', required=True)
-    
+    question_id = fields.Many2one('survey.question', string="Question", ondelete="cascade")
+    left_text = fields.Char(string="Left Item", required=True)
+    right_text = fields.Char(string="Matching Option", required=True)
+
 
 class SurveyQuestionDragItem(models.Model):
     _name = 'survey.question.drag.item'
     _description = 'Survey Question Drag Item'
-    _order = 'sequence, id'
     
-    question_id = fields.Many2one('survey.question', string="Question", ondelete='cascade', required=True)
-    sequence = fields.Integer(default=10)
-    name = fields.Char('Item Text', required=True)
-    correct_drop_zone_id = fields.Many2one('survey.question.drop.zone', string="Correct Drop Zone")
+    question_id = fields.Many2one('survey.question', string="Question", ondelete="cascade")
+    item_text = fields.Char(string="Draggable Item", required=True)
+    correct_zone_id = fields.Many2one('survey.question.drop.zone', string="Correct Drop Zone")
 
 
 class SurveyQuestionDropZone(models.Model):
     _name = 'survey.question.drop.zone'
     _description = 'Survey Question Drop Zone'
-    _order = 'sequence, id'
     
-    question_id = fields.Many2one('survey.question', string="Question", ondelete='cascade', required=True)
-    sequence = fields.Integer(default=10)
-    name = fields.Char('Zone Label', required=True)
+    question_id = fields.Many2one('survey.question', string="Question", ondelete="cascade")
+    zone_text = fields.Char(string="Drop Zone Text", required=True)

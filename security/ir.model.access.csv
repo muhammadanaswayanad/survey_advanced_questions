@@ -1,9 +1,9 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_survey_question_fill_blank_survey_user,survey.question.fill.blank.survey.user,model_survey_question_fill_blank,survey.group_survey_user,1,1,1,1
 access_survey_question_fill_blank_public,survey.question.fill.blank.public,model_survey_question_fill_blank,,1,0,0,0
-access_survey_question_match_item_survey_user,survey.question.match.item.survey.user,model_survey_question_match_item,survey.group_survey_user,1,1,1,1
+access_survey_question_match_item,access_survey_question_match_item,model_survey_question_match_item,survey.group_survey_user,1,1,1,1
 access_survey_question_match_item_public,survey.question.match.item.public,model_survey_question_match_item,,1,0,0,0
-access_survey_question_drag_item_survey_user,survey.question.drag.item.survey.user,model_survey_question_drag_item,survey.group_survey_user,1,1,1,1
+access_survey_question_drag_item,access_survey_question_drag_item,model_survey_question_drag_item,survey.group_survey_user,1,1,1,1
 access_survey_question_drag_item_public,survey.question.drag.item.public,model_survey_question_drag_item,,1,0,0,0
-access_survey_question_drop_zone_survey_user,survey.question.drop.zone.survey.user,model_survey_question_drop_zone,survey.group_survey_user,1,1,1,1
+access_survey_question_drop_zone,access_survey_question_drop_zone,model_survey_question_drop_zone,survey.group_survey_user,1,1,1,1
 access_survey_question_drop_zone_public,survey.question.drop.zone.public,model_survey_question_drop_zone,,1,0,0,0
