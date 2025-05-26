@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extend the survey.question form view -->
+    <record id="survey_question_form_advanced" model="ir.ui.view">
+        <field name="name">survey.question.form.advanced</field>
+        <field name="model">survey.question</field>
+        <field name="inherit_id" ref="survey.survey_question_form"/>
+        <field name="arch" type="xml">
+            <!-- Add new question types to the existing question_type field -->
+            <field name="question_type" position="after">
+                <!-- Fill in the blanks options -->
+                <field name="fill_blank_text" attrs="{'invisible': [('question_type', '!=', 'fill_blank')], 'required': [('question_type', '=', 'fill_blank')]}" placeholder="Enter text with [___] as blanks"/>
+                
+                <field name="fill_blank_answer_ids" attrs="{'invisible': [('question_type', '!=', 'fill_blank')]}">
+                    <tree editable="bottom">
+                        <field name="sequence" widget="handle"/>
+                        <field name="correct_answer"/>
+                        <field name="is_case_sensitive"/>
+                        <field name="allowed_variations"/>
+                    </tree>
+                </field>
+                
+                <!-- Match the following options -->
+                <field name="match_item_ids" attrs="{'invisible': [('question_type', '!=', 'matching')]}">
+                    <tree editable="bottom">
+                        <field name="sequence" widget="handle"/>
+                        <field name="left_text"/>
+                        <field name="right_text"/>
+                    </tree>
+                </field>
+                
+                <!-- Drag and drop options -->
+                <field name="drag_item_ids" attrs="{'invisible': [('question_type', '!=', 'drag_drop')]}">
+                    <tree editable="bottom">
+                        <field name="sequence" widget="handle"/>
+                        <field name="name"/>
+                        <field name="correct_drop_zone_id" domain="[('question_id', '=', parent.id)]"/>
+                    </tree>
+                </field>
+                
+                <field name="drop_zone_ids" attrs="{'invisible': [('question_type', '!=', 'drag_drop')]}">
+                    <tree editable="bottom">
+                        <field name="sequence" widget="handle"/>
+                        <field name="name"/>
+                    </tree>
+                </field>
+            </field>
+        </field>
+    </record>
+</odoo>

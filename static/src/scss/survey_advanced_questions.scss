@@ -1,0 +1,89 @@
+.o_survey_form {
+    // Fill in the blanks styling
+    .fill-blank-container {
+        .fill-blank-text {
+            font-size: 1.1em;
+            line-height: 2;
+            
+            .fill-blank-input {
+                display: inline-block;
+                width: 120px;
+                margin: 0 5px;
+                border-bottom: 1px solid #999;
+            }
+        }
+    }
+    
+    // Match the following styling
+    .matching-container {
+        .matching-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            
+            &:hover {
+                background-color: #e2e6ea;
+            }
+            
+            &.selected {
+                background-color: #cfe2ff;
+                border-color: #b6d4fe;
+            }
+            
+            &.matched {
+                background-color: #d1e7dd;
+                border-color: #badbcc;
+            }
+        }
+        
+        .matching-right-option {
+            cursor: grab;
+        }
+    }
+    
+    // Drag and drop styling
+    .drag-drop-container {
+        .drag-items {
+            .drag-item {
+                cursor: grab;
+                background-color: #f8f9fa;
+                transition: transform 0.2s;
+                
+                &:hover {
+                    transform: translateY(-2px);
+                }
+                
+                &:active {
+                    cursor: grabbing;
+                }
+            }
+        }
+        
+        .drop-zone {
+            min-height: 120px;
+            background-color: #f8f9fa;
+            transition: background-color 0.3s;
+            
+            &.drag-over {
+                background-color: #e2e6ea;
+                border: 2px dashed #6c757d;
+            }
+            
+            .zone-items {
+                min-height: 80px;
+                
+                .drag-item {
+                    margin: 5px;
+                    background-color: #fff;
+                }
+            }
+        }
+        
+        .min-height-100 {
+            min-height: 100px;
+        }
+    }
+}
